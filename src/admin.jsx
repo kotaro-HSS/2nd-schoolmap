@@ -192,7 +192,7 @@ export default function Admin() {
           >
             {/* 背景マップ：1フロア分だけ表示 */}
             <img
-              src="/map_images/map_image.png"
+              src="./map_images/map_image.png"
               alt="map"
               style={{
                 position: "absolute",

@@ -10,7 +10,7 @@ import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter basename="/2nd-schoolmap"> {/* ← base pathを指定 */}
+    <BrowserRouter basename="/2nd-schoolmap/"> {/* ← base pathを指定 */}
       <Routes>
         {/* URLが "/" のときは地図アプリを表示 */}
         <Route path="/" element={<App />} />

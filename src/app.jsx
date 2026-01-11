@@ -330,10 +330,7 @@ const places = nodes.filter(node => node.tf === true || node.tf === "t");
   return (
     <Layout>
     <div className="min-h-screen">
-      {/* HEADER */}
-      <header className="w-full bg-white/90 px-6 py-3 shadow-md">
-        <h1 className="text-lg font-bold text-sky-700 text-center">校内ナビ</h1>
-      </header>
+
 
       <div className="flex flex-col md:flex-row">
         {/* 左側: カテゴリ絞り込み */}

@@ -25,14 +25,14 @@ export default function App() {
         // "nodes" コレクションからデータを全取得
         const querySnapshot = await getDocs(collection(db, "nodes"));
         const fetchedNodes = querySnapshot.docs.map((doc) => doc.data());
-        
+
         // 取得した nodes をセット
         setNodes(fetchedNodes);
-        
+
         // nodes を元に edges を計算してセット
         const computedEdges = getEdges(fetchedNodes);
         setEdges(computedEdges);
-        
+
       } catch (error) {
         console.error("データの取得に失敗しました:", error);
         alert("地図データの読み込みに失敗しました。");
@@ -48,15 +48,15 @@ export default function App() {
   // ---------------------
   // nodes が読み込まれるまでフィルタ等は初期化できないため、useEffect で同期するか、
   // 描画時に計算するように変更します。
-  
-// 修正前
-// const places = nodes.filter(node => node.tf === "t");
 
-// 修正後（一旦すべてのノードを通す）
-//const places = nodes;
+  // 修正前
+  // const places = nodes.filter(node => node.tf === "t");
 
-// 修正(2回目)後
-const places = nodes.filter(node => node.tf === true || node.tf === "t");
+  // 修正後（一旦すべてのノードを通す）
+  //const places = nodes;
+
+  // 修正(2回目)後
+  const places = nodes.filter(node => node.tf === true || node.tf === "t");
   // カテゴリ一覧の作成
   const categoryFiltersObj = {};
   places.forEach((p) => {
@@ -329,297 +329,309 @@ const places = nodes.filter(node => node.tf === true || node.tf === "t");
 
   return (
     <Layout>
-    <div className="min-h-screen">
+      <div className="min-h-screen">
 
 
-      <div className="flex flex-col md:flex-row">
-        {/* 左側: カテゴリ絞り込み */}
-        <aside className="flex-1 p-4 flex flex-col">
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow p-4 flex flex-col h-full">
-            <h2 className="text-lg font-semibold text-sky-700 mb-3">📍 カテゴリーで絞り込み</h2>
+        <div className="flex flex-col md:flex-row">
+          {/* 左側: カテゴリ絞り込み */}
+          <aside className="flex-1 p-4 flex flex-col">
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow p-4 flex flex-col h-full">
+              <h2 className="text-lg font-semibold text-sky-700 mb-3">📍 カテゴリーで絞り込み</h2>
 
-            {/* プルダウン */}
-            <div className="relative w-full mb-4">
-              <select
-                value={Object.keys(categoryFilters).find(cat => categoryFilters[cat]) || ""}
-                onChange={(e) => handleCategoryChange(e.target.value)}
-                className="block w-full p-2 pr-8 text-sm rounded-lg border border-gray-300 bg-white/80 backdrop-blur-sm shadow-sm focus:outline-none focus:ring-0 focus:ring-sky-400 appearance-none"
-              >
-                <option value="">すべてのカテゴリ</option>
-                {Object.keys(categoryFilters).filter(cat => cat !== "階段" && cat !== "中継").map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                ▼
-              </div>
-            </div>
-
-            {/* 候補リスト */}
-            <div className="flex-1 overflow-y-auto max-h-64">
-              {filteredPlaces.length === 0 ? (
-                <p className="text-xs text-gray-400">カテゴリを選択すると場所がここに表示されます。</p>
-              ) : (
-                <ul className="space-y-2">
-                  {filteredPlaces.map((p) => (
-                    <li
-                      key={p.id}
-                      onClick={() => onPlaceClickFromLeft(p)}
-                      className="p-3 border rounded-md hover:bg-sky-50 cursor-pointer"
-                    >
-                      <div className="font-medium text-sky-700">{p.name}</div>
-                      <div className="text-xs text-gray-500">{p.category} ・ {p.floor || "-"}</div>
-                    </li>
+              {/* プルダウン */}
+              <div className="relative w-full mb-4">
+                <select
+                  value={Object.keys(categoryFilters).find(cat => categoryFilters[cat]) || ""}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className="block w-full p-2 pr-8 text-sm rounded-lg border border-gray-300 bg-white/80 backdrop-blur-sm shadow-sm focus:outline-none focus:ring-0 focus:ring-sky-400 appearance-none"
+                >
+                  <option value="">すべてのカテゴリ</option>
+                  {Object.keys(categoryFilters).filter(cat => cat !== "階段" && cat !== "中継").map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
                   ))}
-                </ul>
-              )}
-            </div>
-            <div className="mt-3">
-              <p className="text-xs text-gray-500">※タップで出発地・目的地を選択できます</p>
-            </div>
-          </div>
-        </aside>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                  ▼
+                </div>
+              </div>
 
-        {/* 右側: ルート検索と経路一覧 */}
-        <aside className="md:flex-1 p-4 flex flex-col">
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow p-4 flex flex-col h-full">
-            {/* 出発地・目的地入力 */}
-            <div className="mb-3">
-              <label className="text-xs text-gray-500">出発地</label>
-              <div className="relative">
-                <input
-                  value={start}
-                  onChange={handleStartInput}
-                  placeholder="例：文実受付"
-                  className="w-full p-2 rounded-md border"
-                />
-                {startSuggestions.length > 0 && (
-                  <ul className="absolute z-20 left-0 right-0 bg-white border rounded shadow max-h-40 overflow-y-auto mt-1">
-                    {startSuggestions
-                      .filter(p => p.category !== "中継") // 中継ノードは表示しない
-                      .map((p) => (
-                        <li
-                          key={p.id}
-                          onClick={() => selectStart(p.name)}
-                          className="px-3 py-1 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {p.name}
-                        </li>
-                      ))}
+              {/* 候補リスト */}
+              <div className="flex-1 overflow-y-auto max-h-64">
+                {filteredPlaces.length === 0 ? (
+                  <p className="text-xs text-gray-400">カテゴリを選択すると場所がここに表示されます。</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {filteredPlaces.map((p) => (
+                      <li
+                        key={p.id}
+                        onClick={() => onPlaceClickFromLeft(p)}
+                        className="p-3 border rounded-md hover:bg-sky-50 cursor-pointer"
+                      >
+                        <div className="font-medium text-sky-700">{p.name}</div>
+                        <div className="text-xs text-gray-500">{p.category} ・ {p.floor || "-"}</div>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="text-xs text-gray-500">目的地</label>
-              <div className="relative">
-                <input
-                  value={goal}
-                  onChange={handleGoalInput}
-                  placeholder="例：中庭ステージ"
-                  className="w-full p-2 rounded-md border"
-                />
-                {goalSuggestions.length > 0 && (
-                  <ul className="absolute z-20 left-0 right-0 bg-white border rounded shadow max-h-40 overflow-y-auto mt-1">
-                    {goalSuggestions
-                      .filter(p => p.category !== "中継") // 中継ノードは表示しない
-                      .map((p) => (
-                        <li
-                          key={p.id}
-                          onClick={() => selectGoal(p.name)}
-                          className="px-3 py-1 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {p.name}
-                        </li>
-                      ))}
-                  </ul>
-                )}
+              <div className="mt-3">
+                <p className="text-xs text-gray-500">※タップで出発地・目的地を選択できます</p>
               </div>
             </div>
+          </aside>
 
-
-            <div className="mt-1">
-              <button
-                onClick={handleStartNavigation}
-                className="w-full py-2 bg-sky-600 text-white rounded-xl shadow"
-              >
-                🚶 ナビ開始
-              </button>
-            </div>
-
-            <hr className="my-4" />
-
-            {/* 経路一覧 */}
-            <div className="flex-1 overflow-y-auto max-h-40">
-              <h3 className="text-sm font-medium text-gray-600 mb-2">経路一覧</h3>
-              {visibleRoute.length === 0 ? (
-                <p className="text-xs text-gray-400">経路を開始すると、ここにステップが表示されます。</p>
-              ) : (
-                <ul className="space-y-2">
-                  {visibleRoute.map((s, i) => (
-                    <li
-                      key={s.id || i}
-                      onClick={() => {
-                        const originalIndex = route.findIndex(r => r.id === s.id);
-                        jumpToStep(originalIndex);
-                      }}
-                      className={`p-3 rounded-lg cursor-pointer transition ${route[stepIndex].id === s.id ? "bg-sky-100 border-l-4 border-sky-500" : "bg-white"}`}
-                    >
-                      <div className="text-sm font-semibold text-gray-800">
-                        {route[stepIndex].id === s.id ? "→ " : ""}{s.text}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">ステップ {i + 1}</div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </aside>
-      </div>
-
-      {/* 下段：マップ表示 */}
-      <main className="flex-1 relative pt-4 px-6 pb-28">
-        <div className="absolute inset-0 z-0">
-          {currentImage ? (
-            <img
-              src={currentImage}
-              alt="現在の案内写真"
-              className="w-full h-full object-cover filter brightness-75"
-              onError={(e) => { e.currentTarget.style.display = "none"; }}
-            />
-          ) : (
-            <div className="w-full h-full bg-[url('/map-placeholder.png')] bg-cover bg-center opacity-40" />
-          )}
-          <div className="absolute inset-0 bg-black/10"></div>
-        </div>
-
-        <div className="relative z-10 max-w-3xl mx-auto">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mb-4">
-            {route.length === 0 ? (
-              <p className="text-gray-700 text-center">出発地と目的地を設定して「ナビ開始」を押してください。</p>
-            ) : (() => {
-              let displayStep = route[stepIndex];
-              let node = places.find(p => p.id === displayStep.id);
-
-              let displayIndex = stepIndex;
-              while (node && node.category === "中継" && displayIndex < route.length - 1) {
-                displayIndex += 1;
-                displayStep = route[displayIndex];
-                node = places.find(p => p.id === displayStep.id);
-              }
-
-              const visibleIndex = visibleRoute.findIndex(r => r.id === displayStep.id);
-
-              return (
-                <>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-500">現在の案内</p>
-                      <h3 className="text-xl font-semibold text-sky-800">{displayStep.text}</h3>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {visibleIndex + 1} / {visibleRoute.length}
-                    </div>
-                  </div>
-                  {displayStep.image && (
-                    <div className="mt-3 rounded-lg overflow-hidden">
-                      <img src={displayStep.image} alt="step" className="w-full h-52 object-cover" />
-                    </div>
+          {/* 右側: ルート検索と経路一覧 */}
+          <aside className="md:flex-1 p-4 flex flex-col">
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow p-4 flex flex-col h-full">
+              {/* 出発地・目的地入力 */}
+              <div className="mb-3">
+                <label className="text-xs text-gray-500">出発地</label>
+                <div className="relative">
+                  <input
+                    value={start}
+                    onChange={handleStartInput}
+                    placeholder="例：文実受付"
+                    className="w-full p-2 rounded-md border"
+                  />
+                  {startSuggestions.length > 0 && (
+                    <ul className="absolute z-20 left-0 right-0 bg-white border rounded shadow max-h-40 overflow-y-auto mt-1">
+                      {startSuggestions
+                        .filter(p => p.category !== "中継") // 中継ノードは表示しない
+                        .map((p) => (
+                          <li
+                            key={p.id}
+                            onClick={() => selectStart(p.name)}
+                            className="px-3 py-1 hover:bg-gray-100 cursor-pointer"
+                          >
+                            {p.name}
+                          </li>
+                        ))}
+                    </ul>
                   )}
-                </>
-              );
-            })()}
-          </div>
+                </div>
+              </div>
 
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow p-4">
-            <MapFloorView
-              route={route}
-              places={places}
-              stepIndex={stepIndex}
-            />
-          </div>
+              <div className="mb-3">
+                <label className="text-xs text-gray-500">目的地</label>
+                <div className="relative">
+                  <input
+                    value={goal}
+                    onChange={handleGoalInput}
+                    placeholder="例：中庭ステージ"
+                    className="w-full p-2 rounded-md border"
+                  />
+                  {goalSuggestions.length > 0 && (
+                    <ul className="absolute z-20 left-0 right-0 bg-white border rounded shadow max-h-40 overflow-y-auto mt-1">
+                      {goalSuggestions
+                        .filter(p => p.category !== "中継") // 中継ノードは表示しない
+                        .map((p) => (
+                          <li
+                            key={p.id}
+                            onClick={() => selectGoal(p.name)}
+                            className="px-3 py-1 hover:bg-gray-100 cursor-pointer"
+                          >
+                            {p.name}
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+
+              <div className="mt-1">
+                <button
+                  onClick={handleStartNavigation}
+                  className="w-full py-2 bg-sky-600 text-white rounded-xl shadow"
+                >
+                  🚶 ナビ開始
+                </button>
+              </div>
+
+              <hr className="my-4" />
+
+              {/* 経路一覧 */}
+              <div className="flex-1 overflow-y-auto max-h-40">
+                <h3 className="text-sm font-medium text-gray-600 mb-2">経路一覧</h3>
+                {visibleRoute.length === 0 ? (
+                  <p className="text-xs text-gray-400">経路を開始すると、ここにステップが表示されます。</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {visibleRoute.map((s, i) => (
+                      <li
+                        key={s.id || i}
+                        onClick={() => {
+                          const originalIndex = route.findIndex(r => r.id === s.id);
+                          jumpToStep(originalIndex);
+                        }}
+                        className={`p-3 rounded-lg cursor-pointer transition ${route[stepIndex].id === s.id ? "bg-sky-100 border-l-4 border-sky-500" : "bg-white"}`}
+                      >
+                        <div className="text-sm font-semibold text-gray-800">
+                          {route[stepIndex].id === s.id ? "→ " : ""}{s.text}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">ステップ {i + 1}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </aside>
         </div>
-      </main>
 
-      {/* FOOTER */}
-      <footer className="fixed bottom-0 left-0 w-full z-40 bg-white/90 backdrop-blur-md border-t border-gray-300 shadow-lg">
-        <div className="max-w-5xl mx-auto flex justify-around items-center py-3 px-4 gap-3">
-          <button
-            onClick={handleResetSteps}
-            className="flex-1 py-2 bg-gray-100 text-gray-800 rounded-xl shadow-sm hover:bg-gray-200 transition text-center"
-          >
-            最初に戻る
-          </button>
-
-          <button
-            onClick={handlePrevStep}
-            className="flex-1 py-2 bg-gray-100 text-gray-800 rounded-xl shadow-sm hover:bg-gray-200 transition text-center"
-          >
-            戻る
-          </button>
-
-          <button
-            onClick={handleNextStep}
-            className="flex-1 py-2 bg-sky-500 text-white rounded-xl shadow-sm hover:bg-sky-600 transition text-center"
-          >
-            次へ
-          </button>
-
-          <div className="flex-1">
-            <button
-              onClick={() => setShowEndConfirm(true)} /* ← 必ず true にする */
-              className="w-full py-2 bg-red-500 text-white rounded-xl shadow-sm hover:bg-red-600 transition text-center"
-            >
-              ナビを終了する
-            </button>
+        {/* 下段：マップ表示 */}
+        <main className="flex-1 relative pt-4 px-6 pb-28">
+          <div className="absolute inset-0 z-0">
+            {currentImage ? (
+              <img
+                src={currentImage}
+                alt="現在の案内写真"
+                className="w-full h-full object-cover filter brightness-75"
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
+              />
+            ) : (
+              <div className="w-full h-full bg-[url('/map-placeholder.png')] bg-cover bg-center opacity-40" />
+            )}
+            <div className="absolute inset-0 bg-black/10"></div>
           </div>
-        </div>
-      </footer>
 
-      {/* 終了確認モーダル（画面中央の確実に表示されるモーダル） */}
-      {showEndConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-[92%] max-w-md">
-            <p className="text-center text-gray-800 mb-4">ナビを終了しますか？</p>
+          <div className="relative z-10 max-w-3xl mx-auto">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mb-4">
+              {route.length === 0 ? (
+                <p className="text-gray-700 text-center">出発地と目的地を設定して「ナビ開始」を押してください。</p>
+              ) : (() => {
+                let displayStep = route[stepIndex];
+                let node = places.find(p => p.id === displayStep.id);
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  // 終了処理（既存の handleEndNavigation を呼ぶ）
-                  handleEndNavigation();
-                }}
-                className="flex-1 py-2 bg-red-500 text-white rounded-lg"
-              >
-                終了する
-              </button>
+                let displayIndex = stepIndex;
+                while (node && node.category === "中継" && displayIndex < route.length - 1) {
+                  displayIndex += 1;
+                  displayStep = route[displayIndex];
+                  node = places.find(p => p.id === displayStep.id);
+                }
 
-              <button
-                onClick={() => setShowEndConfirm(false)}
-                className="flex-1 py-2 bg-gray-200 text-gray-800 rounded-lg"
-              >
-                キャンセル
-              </button>
+                const visibleIndex = visibleRoute.findIndex(r => r.id === displayStep.id);
+
+                return (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-500">現在の案内</p>
+                        <h3 className="text-xl font-semibold text-sky-800">{displayStep.text}</h3>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {visibleIndex + 1} / {visibleRoute.length}
+                      </div>
+                    </div>
+                    {displayStep.image && (
+                      <div className="mt-3 rounded-lg overflow-hidden">
+                        <img src={displayStep.image} alt="step" className="w-full h-52 object-cover" />
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow p-4">
+              <MapFloorView
+                route={route}
+                places={places}
+                stepIndex={stepIndex}
+              />
             </div>
           </div>
-        </div>
-      )}
-      {/* モーダル */}
-      {showChoiceModal && selectedPlace && (<div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-          <h3 className="text-lg font-semibold text-sky-700 mb-3">{selectedPlace.name}</h3>
-          <p className="text-xs text-gray-500 mb-3">{selectedPlace.category}</p>
-          <div className="flex gap-3">
-            <button onClick={applyPlaceAsStart} className="flex-1 py-2 bg-sky-500 text-white rounded-xl">出発地に設定</button>
-            <button onClick={applyPlaceAsGoal} className="flex-1 py-2 bg-green-500 text-white rounded-xl">目的地に設定</button>
-          </div>
-          <button onClick={() => setShowChoiceModal(false)} className="mt-3 w-full py-1 text-sm text-gray-500 hover:underline">キャンセル</button>
-        </div>
-      </div>
-      )}
+        </main>
 
-    </div>
+        {/* FOOTER */}
+        <footer className="fixed bottom-0 left-0 w-full z-40 bg-white/90 backdrop-blur-md border-t border-gray-300 shadow-lg">
+          <div className="max-w-5xl mx-auto flex justify-around items-center py-3 px-4 gap-3">
+            <button
+              onClick={handleResetSteps}
+              className="flex-1 py-2 bg-gray-100 text-gray-800 rounded-xl shadow-sm hover:bg-gray-200 transition text-center"
+            >
+              最初に戻る
+            </button>
+
+            <button
+              onClick={handlePrevStep}
+              className="flex-1 py-2 bg-gray-100 text-gray-800 rounded-xl shadow-sm hover:bg-gray-200 transition text-center"
+            >
+              戻る
+            </button>
+
+            <button
+              onClick={handleNextStep}
+              disabled={route.length === 0}
+              className={`flex-1 py-2 rounded-xl shadow-sm transition text-center
+               ${route.length === 0
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-sky-500 text-white hover:bg-sky-600"}
+              `}
+            >
+              次へ
+            </button>
+
+
+            <div className="flex-1">
+              <button
+                onClick={() => setShowEndConfirm(true)}
+                disabled={route.length === 0}
+                className={`w-full py-2 rounded-xl shadow-sm transition text-center
+                  ${route.length === 0
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-red-500 text-white hover:bg-red-600"}
+                `}
+              >
+                ナビを終了する
+              </button>
+
+            </div>
+          </div>
+        </footer>
+
+        {/* 終了確認モーダル（画面中央の確実に表示されるモーダル） */}
+        {showEndConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-xl shadow-xl p-6 w-[92%] max-w-md">
+              <p className="text-center text-gray-800 mb-4">ナビを終了しますか？</p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    // 終了処理（既存の handleEndNavigation を呼ぶ）
+                    handleEndNavigation();
+                  }}
+                  className="flex-1 py-2 bg-red-500 text-white rounded-lg"
+                >
+                  終了する
+                </button>
+
+                <button
+                  onClick={() => setShowEndConfirm(false)}
+                  className="flex-1 py-2 bg-gray-200 text-gray-800 rounded-lg"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* モーダル */}
+        {showChoiceModal && selectedPlace && (<div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+            <h3 className="text-lg font-semibold text-sky-700 mb-3">{selectedPlace.name}</h3>
+            <p className="text-xs text-gray-500 mb-3">{selectedPlace.category}</p>
+            <div className="flex gap-3">
+              <button onClick={applyPlaceAsStart} className="flex-1 py-2 bg-sky-500 text-white rounded-xl">出発地に設定</button>
+              <button onClick={applyPlaceAsGoal} className="flex-1 py-2 bg-green-500 text-white rounded-xl">目的地に設定</button>
+            </div>
+            <button onClick={() => setShowChoiceModal(false)} className="mt-3 w-full py-1 text-sm text-gray-500 hover:underline">キャンセル</button>
+          </div>
+        </div>
+        )}
+
+      </div>
     </Layout>
   );
 }

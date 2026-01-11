@@ -32,6 +32,51 @@ export default function Admin() {
   const [currentFloor, setCurrentFloor] = useState("1F");
   const floorIndex = { "1F": 0, "2F": 1, "3F": 2 }[currentFloor];
 
+  const CATEGORY_OPTIONS = [
+    "教室",
+    "中継",
+    "トイレ",
+    "階段",
+    "部活",
+    "委員会",
+    "中催事",
+    "案内",
+    "食事",
+    "保健室",
+    "入口",
+    "イベント",
+    "職員室",
+  ];
+
+  const updateLabel = async (docId, newLabel) => {
+    try {
+      const ref = doc(db, "nodes", docId);
+      await updateDoc(ref, { label: newLabel });
+    } catch (error) {
+      console.error("label 更新失敗:", error);
+      alert("ラベルの保存に失敗しました");
+    }
+  };
+
+
+
+  const updateNote = async (docId, newNote) => {
+    try {
+      const ref = doc(db, "nodes", docId);
+      await updateDoc(ref, { note: newNote });
+
+      setNodes(prev =>
+        prev.map(n =>
+          n.docId === docId ? { ...n, note: newNote } : n
+        )
+      );
+    } catch (error) {
+      console.error("note 更新失敗:", error);
+      alert("備考の保存に失敗しました");
+    }
+  };
+
+
 
   // ページタイトルを変更
   useEffect(() => {
@@ -59,6 +104,26 @@ export default function Admin() {
       console.error("Firestore更新エラー:", error);
     }
   };
+
+  const updateCategory = async (docId, newCategory) => {
+    try {
+      const ref = doc(db, "nodes", docId);
+      await updateDoc(ref, {
+        category: newCategory,
+      });
+
+      setNodes(prev =>
+        prev.map(node =>
+          node.docId === docId
+            ? { ...node, category: newCategory }
+            : node
+        )
+      );
+    } catch (error) {
+      console.error("カテゴリー更新エラー:", error);
+    }
+  };
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, user => {
@@ -126,7 +191,77 @@ export default function Admin() {
                 key={node.docId}
                 className="border-b p-2 flex justify-between items-center"
               >
-                <span>{node.name} ({node.category})</span>
+                <div className="flex flex-col gap-1">
+                  {/* 名前（固定） */}
+                  <span className="font-medium">
+                    {node.name}
+                  </span>
+
+                  {/* ラベル + カテゴリー（横並び） */}
+                  <div className="flex gap-2 items-center">
+                    {/* ラベル（マップ表示用） */}
+                    <input
+                      type="text"
+                      value={node.label || ""}
+                      placeholder="ラベル"
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setNodes(prev =>
+                          prev.map(n =>
+                            n.docId === node.docId ? { ...n, label: v } : n
+                          )
+                        );
+                      }}
+                      onBlur={(e) => {
+                        updateLabel(node.docId, e.target.value);
+                      }}
+                      className="
+      border rounded px-2 py-1 text-sm
+      placeholder:text-gray-400
+      w-40
+    "
+                    />
+
+                    {/* カテゴリー */}
+                    <select
+                      value={node.category || ""}
+                      onChange={(e) => updateCategory(node.docId, e.target.value)}
+                      className="border rounded px-2 py-1 text-sm"
+                    >
+                      {CATEGORY_OPTIONS.map(cat => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+
+                  {/* 備考欄（管理者用） */}
+                  <textarea
+                    value={node.note || ""}
+                    placeholder="備考"
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setNodes(prev =>
+                        prev.map(n =>
+                          n.docId === node.docId ? { ...n, note: v } : n
+                        )
+                      );
+                    }}
+                    onBlur={(e) => {
+                      updateNote(node.docId, e.target.value);
+                    }}
+                    className="
+                      border rounded px-2 py-1 text-sm
+                      placeholder:text-gray-400
+                      resize-none
+                      "
+                    rows={2}
+                  />
+
+                </div>
+
 
                 <div className="flex items-center gap-4">
                   {/* 状態文字（固定幅） */}
@@ -147,16 +282,16 @@ export default function Admin() {
                     />
                     <div
                       className="
-          w-11 h-6 bg-gray-300
-          rounded-full
-          peer peer-checked:bg-green-500
-          after:content-['']
-          after:absolute after:top-[2px] after:left-[2px]
-          after:bg-white after:rounded-full
-          after:h-5 after:w-5
-          after:transition-all
-          peer-checked:after:translate-x-5
-          "
+                      w-11 h-6 bg-gray-300
+                      rounded-full
+                      peer peer-checked:bg-green-500
+                      after:content-['']
+                      after:absolute after:top-[2px] after:left-[2px]
+                      after:bg-white after:rounded-full
+                      after:h-5 after:w-5
+                      after:transition-all
+                      peer-checked:after:translate-x-5
+                      "
                     ></div>
                   </label>
                 </div>

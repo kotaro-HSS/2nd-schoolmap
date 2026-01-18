@@ -76,6 +76,7 @@ export default function Admin() {
     }
   };
 
+const [searchText, setSearchText] = useState("");
 
 
   // ページタイトルを変更
@@ -142,6 +143,11 @@ export default function Admin() {
     fetchData();
   }, []);
 
+  const filteredNodes = nodes.filter(node =>
+  node.name?.toLowerCase().includes(searchText.toLowerCase())
+);
+
+
   if (!loggedIn) {
     return (
       <div className="p-8 max-w-md mx-auto">
@@ -183,10 +189,19 @@ export default function Admin() {
         <h1 className="text-2xl font-bold mb-4">管理者用：データ編集画面</h1>
         <p className="mb-4 text-gray-600">ここから通行止め情報などを書き換えます。</p>
 
+        <input
+  type="text"
+  placeholder="教室名で検索（name）"
+  value={searchText}
+  onChange={(e) => setSearchText(e.target.value)}
+  style={{ marginBottom: "10px", width: "100%" }}
+/>
+
+
         <div className="border rounded p-4 shadow-sm bg-white">
           <h2 className="font-bold mb-2">登録データ一覧 ({nodes.length}件)</h2>
           <ul className="space-y-2 h-96 overflow-y-auto">
-            {nodes.map(node => (
+            {filteredNodes.map(node => (
               <li
                 key={node.docId}
                 className="border-b p-2 flex justify-between items-center"

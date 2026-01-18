@@ -18,7 +18,7 @@ export default function MapFloorView({ route, places, stepIndex }) {
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
 
-        
+
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
         if (!route || route.length === 0) return;
@@ -26,6 +26,11 @@ export default function MapFloorView({ route, places, stepIndex }) {
         // 現在ステップ
         const currentStep = route[stepIndex];
         const currentNode = places.find(p => p.id === currentStep.id);
+        const displayName =
+            currentNode.label && currentNode.label.trim() !== ""
+                ? currentNode.label
+                : currentNode.name;
+
         if (!currentNode) return;
 
         // 階判定
@@ -108,6 +113,9 @@ export default function MapFloorView({ route, places, stepIndex }) {
                 ctx.beginPath();
                 ctx.arc(x, y, 4, 0, 2 * Math.PI);
                 ctx.fill();
+                ctx.fillStyle = "#000";
+                ctx.font = "12px sans-serif";
+                ctx.fillText(name, x + 6, y - 6);
             });
 
             let toNode = null;

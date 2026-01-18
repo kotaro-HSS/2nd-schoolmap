@@ -16,6 +16,14 @@ export default function App() {
   const [edges, setEdges] = useState([]);
   const [loading, setLoading] = useState(true);
 
+const getDisplayName = (node) => {
+  if (!node) return "";
+  if (node.label && node.label.trim() !== "") return node.label;
+  return node.name;
+};
+
+
+
   // ---------------------
   // 1. Firebaseからデータを読み込む
   // ---------------------
@@ -96,14 +104,14 @@ export default function App() {
     const v = e.target.value;
     setStart(v);
     setStartSuggestions(
-      v ? places.filter((p) => p.name?.toLowerCase().includes(v.toLowerCase())) : []
+      v ? places.filter((p) => getDisplayName(p)?.toLowerCase().includes(v.toLowerCase())) : []
     );
   };
   const handleGoalInput = (e) => {
     const v = e.target.value;
     setGoal(v);
     setGoalSuggestions(
-      v ? places.filter((p) => p.name?.toLowerCase().includes(v.toLowerCase())) : []
+      v ? places.filter((p) => getDisplayName(p)?.toLowerCase().includes(v.toLowerCase())) : []
     );
   };
   const selectStart = (name) => {
@@ -205,23 +213,23 @@ export default function App() {
     if (
       fromNode.category === "階段" &&
       toNode.category === "階段" &&
-      fromNode.name === toNode.name
+      getDisplayName(fromNode) === getDisplayName(toNode)
     ) {
       const fromFloorNum = parseInt(fromNode.floor);
       const toFloorNum = parseInt(toNode.floor);
 
       if (fromFloorNum < toFloorNum) {
-        return `${fromNode.name}を${toFloor}まで上がります。`;
+return `${getDisplayName(fromNode)}を${toFloor}まで上がります。`;
       }
 
       if (fromFloorNum > toFloorNum) {
-        return `${fromNode.name}を${toFloor}まで下がります。`;
+return `${getDisplayName(fromNode)}を${toFloor}まで上がります。`;
       }
 
-      return `${fromNode.name}を通過します。`;
+      return `${getDisplayName(fromNode)}を通過します。`;
     }
 
-    return `${toNode.name} に進みます。`;
+return `${getDisplayName(toNode)} に進みます。`;
   };
 
 
@@ -238,8 +246,8 @@ export default function App() {
       return;
     }
 
-    const startNode = nodes.find(n => n.name === start);
-    const goalNode = nodes.find(n => n.name === goal);
+ const startNode = nodes.find(n => getDisplayName(n) === start);
+ const goalNode = nodes.find(n => getDisplayName(n) === goal);
     if (!startNode || !goalNode) return;
 
     const shortestPathNodes = getShortestPath(startNode.id, goalNode.id);
@@ -300,11 +308,11 @@ export default function App() {
     setShowChoiceModal(true);
   };
   const applyPlaceAsStart = () => {
-    if (selectedPlace) setStart(selectedPlace.name);
+    if (selectedPlace) setStart(getDisplayName(selectedPlace));
     setShowChoiceModal(false);
   };
   const applyPlaceAsGoal = () => {
-    if (selectedPlace) setGoal(selectedPlace.name);
+    if (selectedPlace) setGoal(getDisplayName(selectedPlace));
     setShowChoiceModal(false);
   };
 
@@ -367,7 +375,7 @@ export default function App() {
                         onClick={() => onPlaceClickFromLeft(p)}
                         className="p-3 border rounded-md hover:bg-sky-50 cursor-pointer"
                       >
-                        <div className="font-medium text-sky-700">{p.name}</div>
+<div className="font-medium text-sky-700">{getDisplayName(p)}</div>
                         <div className="text-xs text-gray-500">{p.category} ・ {p.floor || "-"}</div>
                       </li>
                     ))}
@@ -400,10 +408,10 @@ export default function App() {
                         .map((p) => (
                           <li
                             key={p.id}
-                            onClick={() => selectStart(p.name)}
+                            onClick={() => selectStart(getDisplayName(p))}
                             className="px-3 py-1 hover:bg-gray-100 cursor-pointer"
                           >
-                            {p.name}
+                            {getDisplayName(p)}
                           </li>
                         ))}
                     </ul>
@@ -427,10 +435,10 @@ export default function App() {
                         .map((p) => (
                           <li
                             key={p.id}
-                            onClick={() => selectGoal(p.name)}
+                            onClick={() => selectGoal(getDisplayName(p))}
                             className="px-3 py-1 hover:bg-gray-100 cursor-pointer"
                           >
-                            {p.name}
+                            {getDisplayName(p)}
                           </li>
                         ))}
                     </ul>
@@ -620,7 +628,7 @@ export default function App() {
         {/* モーダル */}
         {showChoiceModal && selectedPlace && (<div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <h3 className="text-lg font-semibold text-sky-700 mb-3">{selectedPlace.name}</h3>
+            <h3 className="text-lg font-semibold text-sky-700 mb-3">{getDisplayName(selectedPlace)}</h3>
             <p className="text-xs text-gray-500 mb-3">{selectedPlace.category}</p>
             <div className="flex gap-3">
               <button onClick={applyPlaceAsStart} className="flex-1 py-2 bg-sky-500 text-white rounded-xl">出発地に設定</button>

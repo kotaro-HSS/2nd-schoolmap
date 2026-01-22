@@ -223,7 +223,7 @@ return `${getDisplayName(fromNode)}を${toFloor}まで上がります。`;
       }
 
       if (fromFloorNum > toFloorNum) {
-return `${getDisplayName(fromNode)}を${toFloor}まで上がります。`;
+return `${getDisplayName(fromNode)}を${toFloor}まで下ります。`;
       }
 
       return `${getDisplayName(fromNode)}を通過します。`;
